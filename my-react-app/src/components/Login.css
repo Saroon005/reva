@@ -161,6 +161,7 @@ body {
   text-decoration: underline;
 }
 
+/* Update the input wrapper and input styles */
 .input-wrapper {
   position: relative;
   width: 100%;
@@ -168,30 +169,35 @@ body {
 
 .input-icon {
   position: absolute;
-  left: 12px;
+  right: 12px; /* Changed from left to right */
   top: 50%;
   transform: translateY(-50%);
   width: 20px;
   height: 20px;
-  color: #666;
+  color: var(--text-secondary);
+  pointer-events: none;
 }
 
 .input-wrapper input {
   width: 100%;
-  padding: 12px 12px 12px 40px; /* Increased left padding to make room for icon */
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
+  padding: 12px 44px 12px 12px; /* Changed padding to right side */
+  border: 1px solid var(--input-border);
+  border-radius: var(--border-radius);
+  background-color: var(--input-bg);
+  font-size: 0.875rem;
+  color: #1f2937; /* Darker text color for better visibility */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-wrapper input::placeholder {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
 }
 
 .input-wrapper input:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-}
-
-.input-wrapper input::placeholder {
-  color: #999;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
 }
 
 .login-button {
@@ -266,52 +272,54 @@ body {
 }
 
 .social-divider {
-  display: flex;
-  align-items: center;
+  position: relative;
+  text-align: center;
   margin: 1.5rem 0;
-  color: var(--text-secondary);
 }
 
-.social-divider:before,
-.social-divider:after {
-  content: '';
-  flex: 1;
+.social-divider:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
   height: 1px;
   background-color: var(--input-border);
+  z-index: -1;
 }
 
 .social-divider span {
-  padding: 0 0.75rem;
-  font-size: 0.75rem;
+  background-color: white;
+  padding: 0 1rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+/* Update the social button and icon styles */
+.social-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px; /* Increased from 48px */
+  height: 56px; /* Increased from 48px */
+  border: 1px solid var(--input-border);
+  border-radius: var(--border-radius);
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0.75rem; /* Added padding */
+}
+
+.social-icon {
+  width: 32px; /* Increased from 24px */
+  height: 32px; /* Increased from 24px */
 }
 
 .social-buttons {
   display: flex;
   justify-content: center;
-  gap: 0.75rem;
-}
-
-.social-button {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--input-border);
-  background-color: white;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.social-button:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
-}
-
-.social-icon {
-  width: 1.25rem;
-  height: 1.25rem;
+  gap: 1.25rem; /* Increased from 1rem for better spacing */
+  margin-top: 1.5rem;
 }
 
 .login-footer {

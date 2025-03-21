@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import './Dashboard.css'; // Import the CSS file
 
-function Prompt() {
+function Dashboard() {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -35,11 +36,9 @@ function Prompt() {
     navigate('/login');
   };
 
-
   const handleAccessKnownPersons = async () => {
-    const userId = localStorage.getItem('userId'); // Get userId from localStorage
+    const userId = localStorage.getItem('userId');
     const token = localStorage.getItem('token');
-    console.log(userId);
 
     if (!userId) {
       alert('User ID not found. Please log in again.');
@@ -47,14 +46,14 @@ function Prompt() {
     }
 
     try {
-      // Change the URL to include the correct base URL (http://localhost:5000)
-      const response = await axios.post('http://localhost:5000/api/update-known-persons', 
+      const response = await axios.post(
+        'http://localhost:5000/api/update-known-persons',
         { userId },
         {
           headers: {
             'Content-Type': 'application/json',
-            'x-auth-token': token, // Include auth token if needed
-          }
+            'x-auth-token': token,
+          },
         }
       );
 
@@ -78,48 +77,70 @@ function Prompt() {
     );
   }
 
+  // Get initials for avatar if no profile photo
+  const getInitials = () => {
+    return userData?.name ? userData.name.charAt(0).toUpperCase() : '?';
+  };
+
   return (
-    <div className="prompt-container">
-      <div className="prompt-header">
-        <h2>Welcome</h2>
-        <button onClick={handleLogout} className="logout-button">Logout</button>
-        <button onClick={()=>navigate('/prompt')} className="logout-button">Prompt</button>
-      </div>
-
-      <div className="prompt-card">
-        <div className="user-avatar">
-          {userData.name.charAt(0).toUpperCase()}
-        </div>
-
-        <div className="user-info">
-          <h3>{userData.name}</h3>
-          <p className="user-email">{userData.email}</p>
-
-          <div className="user-details">
-            <div className="detail-item">
-              <span className="detail-label">Age</span>
-              <span className="detail-value">{userData.age}</span>
-            </div>
-
-            <div className="detail-item">
-              <span className="detail-label">User ID</span>
-              <span className="detail-value id-value">{userData._id}</span>
-            </div>
-
-            <div className="detail-item">
-              <span className="detail-label">Account Created</span>
-              <span className="detail-value">
-                {new Date(userData.date).toLocaleDateString()}
-              </span>
-            </div>
+    <div className="dashboard-container">
+      {/* Header with user profile and logout */}
+      <header className="dashboard-header">
+        <div className="profile-section">
+          <div className="user-avatar">
+            {getInitials()}
+          </div>
+          <div className="user-name">
+            <h3>{userData.name}</h3>
+            <p className="user-email">{userData.email}</p>
           </div>
         </div>
-      </div>
-      <button onClick={handleAccessKnownPersons} className="access-known-persons-button">
-        Access Known Persons
-      </button>
+        <button onClick={handleLogout} className="logout-button">
+          Logout
+        </button>
+      </header>
+
+      {/* Main content with 4 feature boxes */}
+      <main className="dashboard-main">
+        <div className="feature-grid">
+          {/* Box 1: Prompt */}
+          <div className="feature-box" onClick={() => navigate('/prompt')}>
+            <div className="feature-icon">📝</div>
+            <h3>Prompt</h3>
+            <p>Create and manage your prompts</p>
+          </div>
+
+          {/* Box 2: Contacts */}
+          <div className="feature-box" onClick={handleAccessKnownPersons}>
+            <div className="feature-icon">👥</div>
+            <h3>Contacts</h3>
+            <p>Manage your known persons</p>
+          </div>
+
+          {/* Box 3: Dummy Feature 1 */}
+          <div className="feature-box">
+            <div className="feature-icon">📊</div>
+            <h3>Analytics</h3>
+            <p>View your usage statistics</p>
+          </div>
+
+          {/* Box 4: Dummy Feature 2 */}
+          <div className="feature-box">
+            <div className="feature-icon">⚙️</div>
+            <h3>Settings</h3>
+            <p>Configure your preferences</p>
+          </div>
+        </div>
+      </main>
+
+      {/* Footer with record button */}
+      <footer className="dashboard-footer">
+        <button className="record-button">
+          <span className="record-icon">●</span> Start Recording
+        </button>
+      </footer>
     </div>
   );
 }
 
-export default Prompt;
+export default Dashboard;
