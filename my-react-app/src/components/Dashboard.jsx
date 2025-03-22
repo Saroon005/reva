@@ -6,6 +6,7 @@ import './Dashboard.css'; // Import the CSS file
 function Dashboard() {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isRecording, setIsRecording] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,11 +31,23 @@ function Dashboard() {
     fetchUserData();
   }, [navigate]);
 
+  
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
     navigate('/login');
   };
+
+
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Loading your profile...</p>
+      </div>
+    );
+  }
 
   const handleAccessKnownPersons = async () => {
     const userId = localStorage.getItem('userId');
@@ -64,9 +77,40 @@ function Dashboard() {
       }
     } catch (error) {
       console.error('Error updating known persons:', error);
-      alert(`An error occurred: ${error.message}`);
     }
   };
+
+  const toggleRecording = async () => {
+    try {
+      // Determine which endpoint to call based on current state
+      const endpoint = isRecording 
+        ? 'https://lbq629b2-5000.inc1.devtunnels.ms/stop'
+        : 'https://lbq629b2-5000.inc1.devtunnels.ms/start';
+      
+      console.log(`Calling endpoint: ${endpoint}`);
+      setIsRecording(!isRecording);
+      // Make the API call
+      const response = await axios.get(endpoint);
+      
+      if (response.status === 200) {
+        // Toggle recording state with functional update to ensure latest state
+        setIsRecording(prevState => !prevState);
+        console.log(`Recording state toggled to: ${!isRecording}`);
+      } else {
+        console.error(`Unexpected response status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error(`Error toggling recording:`, error);
+        }
+  };
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Loading your profile...</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -117,14 +161,14 @@ function Dashboard() {
             <p>Manage your known persons</p>
           </div>
 
-          {/* Box 3: Dummy Feature 1 */}
+          {/* Box 3: User Profile */}
           <div className="feature-box" onClick={() => navigate('/userprofile')}>
             <div className="feature-icon">📊</div>
             <h3>User Profile</h3>
             <p>View your credentials</p>
           </div>
 
-          {/* Box 4: Dummy Feature 2 */}
+          {/* Box 4: Settings */}
           <div className="feature-box">
             <div className="feature-icon">⚙️</div>
             <h3>Settings</h3>
@@ -133,10 +177,19 @@ function Dashboard() {
         </div>
       </main>
 
-      {/* Footer with record button */}
-      <footer className="dashboard-footer" onClick={handleAccessKnownPersons}>
-        <button className="record-button">
-          <span className="record-icon"><span className='green'>Start</span>/<span className='red'>Stop</span> Recording</span> 
+      <footer className="dashboard-footer">
+        <button className="record-button" onClick={handleAccessKnownPersons}>
+          <span className="record-icon">Update Known Persons</span>
+        </button>
+        
+        <button className="record-button" onClick={toggleRecording}>
+          <span className="record-icon">
+            {isRecording ? (
+              <span className="red">Stop Recording</span>
+            ) : (
+              <span className="green">Start Recording</span>
+            )}
+          </span>
         </button>
       </footer>
     </div>

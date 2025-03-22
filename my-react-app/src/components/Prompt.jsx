@@ -160,6 +160,76 @@ function Prompt() {
     return person ? person.name : 'Unknown Person';
   };
 
+  const renderSummaryContent = (summary) => {
+    if (!summary) return null;
+    
+    // Process the summary text to identify sections
+    const sections = {};
+    let currentSection = null;
+    let currentContent = [];
+    
+    summary.split('\n').forEach(line => {
+      // Check if this line is a section header
+      const sectionMatch = line.match(/\*\*(.*?):\*\*/);
+      
+      if (sectionMatch) {
+        // If we were building a previous section, save it
+        if (currentSection) {
+          sections[currentSection] = currentContent.join('\n');
+          currentContent = [];
+        }
+        
+        // Start a new section
+        currentSection = sectionMatch[1];
+        // Add the rest of the line after the section header
+        const remainingContent = line.replace(sectionMatch[0], '').trim();
+        if (remainingContent) {
+          currentContent.push(remainingContent);
+        }
+      } else if (line.trim()) {
+        // Add content to the current section
+        currentContent.push(line);
+      }
+    });
+    
+    // Save the last section
+    if (currentSection) {
+      sections[currentSection] = currentContent.join('\n');
+    }
+    
+    // If no sections were found, treat the whole text as one section
+    if (Object.keys(sections).length === 0 && summary.trim()) {
+      sections['Summary'] = summary;
+    }
+    
+    // Render the sections
+    return (
+      <div className="summary-sections">
+        {Object.entries(sections).map(([title, content], index) => (
+          <div key={index} className="summary-section">
+            <h4 className="summary-section-title">{title}</h4>
+            <div className="summary-section-content">
+              {content.split('\n').map((paragraph, idx) => {
+                // Check if this is a bullet point
+                if (paragraph.trim().startsWith('*')) {
+                  return (
+                    <ul key={idx} className="summary-bullets">
+                      {paragraph.split('*').filter(item => item.trim()).map((item, bulletIdx) => (
+                        <li key={bulletIdx}>{item.trim()}</li>
+                      ))}
+                    </ul>
+                  );
+                } else {
+                  return <p key={idx}>{paragraph}</p>;
+                }
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="container">
       <nav className="app-nav">
@@ -277,42 +347,63 @@ function Prompt() {
                 ? `Summary for ${formatDate(summaryData.date)}`
                 : `All Conversation Insights with ${getSelectedPersonName()}`}
             </h2>
-            <p className="card-subtitle">
-              <span>{summaryData.conversation_count} messages</span>
-              <span> • </span>
-              <span>{summaryData.conversation_length} characters</span>
-            </p>
+            <div className="insights-stats">
+              <div className="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>{summaryData.conversation_count} messages</span>
+              </div>
+              <div className="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                <span>{summaryData.conversation_length} characters</span>
+              </div>
+            </div>
           </div>
           
           <div className="card-body">
-            <div className="card-section">
-              <h3 className="section-title">Key Insights</h3>
+            <div className="card-section insights-section">
+              <h3 className="section-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="section-icon">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                Key Insights
+              </h3>
               {summaryData.success ? (
                 <div className="summary-content conversation-text">
-                  {summaryData.summary.split('\n').map((paragraph, index) => (
-                    <p key={index} className="mb-3">{paragraph}</p>
-                  ))}
+                  {renderSummaryContent(summaryData.summary)}
                 </div>
               ) : (
-                <p className="text-orange-600">
+                <p className="text-warning">
                   {summaryData.summary || 'No summary available for this conversation'}
                 </p>
               )}
             </div>
             
             {summaryData.original_messages && summaryData.original_messages.length > 0 && (
-              <div className="card-section">
-                <h3 className="section-title">Original Messages</h3>
+              <div className="card-section messages-section">
+                <h3 className="section-title">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="section-icon">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Original Messages
+                </h3>
                 <div className="message-container">
                   {summaryData.original_messages.map((message, index) => (
-                    <div key={index} className="message-item">
+                    <div key={index} className={`message-item ${message.speaker === 'You' ? 'message-self' : 'message-other'}`}>
                       <div className="message-header">
                         <span className="message-sender">{message.speaker}</span>
                         <span className="message-time">
                           {new Date(message.timestamp).toLocaleString()}
                         </span>
                       </div>
-                      <p className="message-content">{message.text}</p>
+                      <div className="message-bubble">
+                        <p className="message-content">{message.text}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -320,29 +411,42 @@ function Prompt() {
             )}
             
             {summaryData.messages_by_date && Object.keys(summaryData.messages_by_date).length > 0 && (
-              <div className="card-section">
-                <h3 className="section-title">Conversation History</h3>
+              <div className="card-section history-section">
+                <h3 className="section-title">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="section-icon">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  Conversation History
+                </h3>
                 
-                {summaryData.conversation_dates && summaryData.conversation_dates.map(date => (
-                  <div key={date} className="mb-4">
-                    <h4 className="message-date-header">
-                      {formatDate(date)}
-                    </h4>
-                    <div className="message-container">
-                      {summaryData.messages_by_date[date].map((message, index) => (
-                        <div key={index} className="message-item">
-                          <div className="message-header">
-                            <span className="message-sender">{message.speaker}</span>
-                            <span className="message-time">
-                              {new Date(message.timestamp).toLocaleString()}
-                            </span>
+                <div className="conversation-timeline">
+                  {summaryData.conversation_dates && summaryData.conversation_dates.map((date, idx) => (
+                    <div key={date} className={`timeline-day ${idx === 0 ? 'first-day' : ''}`}>
+                      <div className="day-marker">
+                        <div className="day-marker-dot"></div>
+                        <h4 className="message-date-header">
+                          {formatDate(date)}
+                        </h4>
+                      </div>
+                      <div className="timeline-messages">
+                        {summaryData.messages_by_date[date].map((message, index) => (
+                          <div key={index} className={`message-item ${message.speaker === 'You' ? 'message-self' : 'message-other'}`}>
+                            <div className="message-header">
+                              <span className="message-sender">{message.speaker}</span>
+                              <span className="message-time">
+                                {new Date(message.timestamp).toLocaleTimeString()}
+                              </span>
+                            </div>
+                            <div className="message-bubble">
+                              <p className="message-content">{message.text}</p>
+                            </div>
                           </div>
-                          <p className="message-content">{message.text}</p>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>

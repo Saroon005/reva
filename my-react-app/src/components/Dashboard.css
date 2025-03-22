@@ -179,6 +179,8 @@
     width: 90%; /* Make button take up more width on mobile */
     max-width: 300px; /* Prevent it from becoming too wide */
     box-sizing: border-box; /* Include padding in width calculation */
+    margin: 4px;
+    border: 2px solid black;
   }
   
   .record-button:hover {
@@ -189,7 +191,7 @@
     margin-right: 8px; /* Reduced margin for mobile */
     font-size: 1em; /* Reduced icon size for mobile */
     color: black;
-
+    margin: 4px;
   }
   
   @keyframes pulse {

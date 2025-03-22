@@ -11,25 +11,11 @@ conversation_collection = db["conversation"]
 
 # The conversation data directly as an object
 conversation_data = [
-    {
-        "text": "Good morning, Sarah. I've been reviewing the quarterly performance metrics for our enterprise division, and I wanted to discuss some of the remarkable trends we're seeing. The data suggests we've exceeded our targets significantly, especially in the new markets we entered last quarter. I'm particularly interested in understanding what specific strategies contributed to this success so we can potentially replicate them across other divisions.",
-        "timestamp": "2025-03-20T09:30:00.000000"
-    },
-    {
-        "text": "Good morning, Michael. I've prepared a comprehensive analysis of our Q1 performance. The enterprise division has indeed shown exceptional growth with revenue reaching $2.4 million, representing a 15% increase over our projected targets and a 22% year-over-year improvement compared to Q1 last year. Several factors contributed to this success, including the strategic partnerships we established with key industry players, the enhanced feature set we rolled out in our enterprise solution, and the targeted marketing campaign that generated a 40% increase in qualified leads. I've included a breakdown of performance by market segment and product line in the report I'll be sharing after our discussion.",
-        "timestamp": "2025-03-20T09:30:15.000000"
-    },
-    {
-        "text": "That's impressive.",
-        "timestamp": "2025-03-20T09:31:50.000000"
-    },
-    {
-        "text": "Thank you, Michael. The team really came together this quarter to make it happen. I've been analyzing which strategies had the biggest impact, and I believe our new customer-centric approach to product development was key. By involving enterprise clients earlier in the development cycle, we addressed pain points more effectively than our competitors. Would you like me to prepare a presentation on these successful strategies for the executive meeting next week? We could showcase how these approaches might benefit other divisions as well.",
-        "speaker": "app_user",
-        "timestamp": "2025-03-21T10:15:00.000000"
-    }
+    {"text": "Good morning, Sarah. I wanted to discuss our quarterly performance. We've exceeded targets, especially in new markets.", "timestamp": "2025-03-20T09:30:00.000000"},
+    {"text": "Good morning, Michael. Our revenue reached $2.4M, a 15% increase. Strategic partnerships and marketing contributed significantly.", "timestamp": "2025-03-20T09:30:15.000000"},
+    {"text": "That's impressive.", "timestamp": "2025-03-20T09:31:50.000000"},
+    {"text": "The team did great. Our customer-focused product strategy played a key role. Should I prepare a presentation for next week?", "timestamp": "2025-03-21T10:15:00.000000"}
 ]
-
 # Create the document to insert
 conversation_document = {
     "patient_id": "2b21eca3-e66e-4c4c-b539-d1be28726152",

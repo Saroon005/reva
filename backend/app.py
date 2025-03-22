@@ -19,13 +19,23 @@ from pymongo import MongoClient
 app = Flask(__name__)
 
 # Configure CORS properly to accept requests from your React app
+# Updated to include all possible origins including the forwarded URL
 CORS(app, 
      resources={r"/*": {
-         "origins": ["http://localhost:5173"],
+         "origins": ["http://localhost:5173", 
+                    "https://4l6d3mlb-5173.inc1.devtunnels.ms",
+                    "https://4l6d3mlb-5000.inc1.devtunnels.ms"],
          "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
          "allow_headers": ["Content-Type", "Authorization", "x-auth-token"]
      }},
      supports_credentials=True)
+
+# Debug logging for CORS
+@app.after_request
+def after_request(response):
+    print(f"Request: {request.method} {request.path} - Response: {response.status_code}")
+    print(f"Request Headers: Origin={request.headers.get('Origin')}")
+    return response
 
 # Load environment variables
 load_dotenv()
@@ -102,23 +112,6 @@ def token_required(f):
         return f(current_user_id, *args, **kwargs)
 
     return decorated
-
-# Add OPTIONS handlers for endpoints to fix CORS issues
-@app.route('/api/known-persons/<patient_id>', methods=['OPTIONS'])
-def options_known_persons(patient_id):
-    response = jsonify({'status': 'success'})
-    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:5173')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-auth-token')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
-    return response
-
-@app.route('/api/known-person-ids/<patient_id>', methods=['OPTIONS'])
-def options_known_person_ids(patient_id):
-    response = jsonify({'status': 'success'})
-    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:5173')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-auth-token')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
-    return response
 
 # Groq API Functions
 def summarize_conversation(conversation_text):
@@ -235,6 +228,51 @@ def test_groq_api():
 def home():
     return "API Running"
 
+# Add OPTIONS methods for all routes to handle preflight requests
+@app.route('/', methods=['OPTIONS'])
+def home_options():
+    return "", 200
+
+@app.route('/api/test', methods=['OPTIONS'])
+def test_db_options():
+    return "", 200
+
+@app.route('/api/auth/register', methods=['OPTIONS'])
+def register_options():
+    return "", 200
+
+@app.route('/api/auth/login', methods=['OPTIONS'])
+def login_options():
+    return "", 200
+
+@app.route('/api/auth/user', methods=['OPTIONS'])
+def get_user_options():
+    return "", 200
+
+@app.route('/api/update-known-persons', methods=['OPTIONS'])
+def update_known_persons_options():
+    return "", 200
+
+@app.route('/api/known-person-ids/<patient_id>', methods=['OPTIONS'])
+def get_known_person_ids_options(patient_id):
+    return "", 200
+
+@app.route('/api/known-persons/<patient_id>', methods=['OPTIONS'])
+def get_known_persons_options(patient_id):
+    return "", 200
+
+@app.route('/api/save-conversation', methods=['OPTIONS'])
+def save_conversation_options():
+    return "", 200
+
+@app.route('/api/summarize-all-conversations', methods=['OPTIONS'])
+def summarize_all_conversations_options():
+    return "", 200
+
+@app.route('/api/summarize-conversation', methods=['OPTIONS'])
+def summarize_conversation_options():
+    return "", 200
+
 # Add a route to test MongoDB connection
 @app.route('/api/test', methods=['GET'])
 def test_db():
@@ -321,11 +359,13 @@ def register():
 def login():
     try:
         data = request.get_json()
+        print(f"Login attempt for email: {data.get('email', 'unknown')}")
 
         # Find user by email
         try:
             user = Patient.objects(email=data['email']).first()
             if not user:
+                print(f"User not found with email: {data.get('email')}")
                 return jsonify({'message': 'Invalid credentials'}), 400
         except Exception as e:
             print(f"Error finding user: {str(e)}")
@@ -333,6 +373,7 @@ def login():
 
         # Check password
         if not bcrypt.checkpw(data['password'].encode('utf-8'), user.password.encode('utf-8')):
+            print("Password check failed")
             return jsonify({'message': 'Invalid credentials'}), 400
 
         # Create payload for JWT
@@ -345,6 +386,8 @@ def login():
 
         # Generate token
         token = jwt.encode(payload, "patientSecretKey123", algorithm="HS256")
+        
+        print(f"Login successful for user: {user.email}")
 
         # Return user data and token
         return jsonify({

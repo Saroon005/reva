@@ -165,8 +165,9 @@ body {
 .input-wrapper {
   position: relative;
   width: 100%;
+  position: flex;
+  flex-direction: column;
 }
-
 .input-icon {
   position: absolute;
   right: 12px; /* Changed from left to right */

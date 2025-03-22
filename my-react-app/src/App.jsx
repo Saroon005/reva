@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import Register from './components/Register';
-import Dashboard from './components/Dashboard';
+import Dashboard from './components/Dashboard'
 import Prompt from './components/Prompt';
 import Contacts from './components/contacts';
 import UserProfile from './components/UserProfile'; 
