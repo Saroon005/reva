@@ -1,0 +1,28 @@
+/* KnownPersonsDetails.css */
+
+.known-persons-details-container {
+    padding: 20px;
+    font-family: sans-serif;
+  }
+  
+  .known-persons-details-list {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .known-person-details-item {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+  }
+  
+  .known-person-details-item p {
+    margin: 5px 0;
+  }
+  
+  .error-display {
+    color: red;
+    padding: 20px;
+    text-align: center;
+  }

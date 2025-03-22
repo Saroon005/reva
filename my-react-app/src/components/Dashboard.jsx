@@ -106,12 +106,12 @@ function Dashboard() {
           {/* Box 1: Prompt */}
           <div className="feature-box" onClick={() => navigate('/prompt')}>
             <div className="feature-icon">📝</div>
-            <h3>Prompt</h3>
-            <p>Create and manage your prompts</p>
+            <h3>Summary</h3>
+            <p>View AI-generated summaries</p>
           </div>
 
           {/* Box 2: Contacts */}
-          <div className="feature-box" onClick={handleAccessKnownPersons}>
+          <div className="feature-box" onClick={() => navigate('/contacts')}>
             <div className="feature-icon">👥</div>
             <h3>Contacts</h3>
             <p>Manage your known persons</p>
@@ -134,9 +134,9 @@ function Dashboard() {
       </main>
 
       {/* Footer with record button */}
-      <footer className="dashboard-footer">
+      <footer className="dashboard-footer" onClick={handleAccessKnownPersons}>
         <button className="record-button">
-          <span className="record-icon">●</span> Start Recording
+          <span className="record-icon"><span className='green'>Start</span>/<span className='red'>Stop</span> Recording</span> 
         </button>
       </footer>
     </div>

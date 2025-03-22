@@ -3,11 +3,19 @@ from flask_cors import CORS
 import bcrypt
 import jwt
 import datetime
-import uuid  # Import the uuid module
+import uuid
+import requests
+import os
 from functools import wraps
+from dotenv import load_dotenv
+from dateutil.parser import parse
+
+# MongoDB imports
 import mongoengine as me
 from mongoengine import Document, StringField, IntField, DateTimeField, connect, disconnect_all, DoesNotExist, ListField
+from pymongo import MongoClient
 
+# Initialize Flask app
 app = Flask(__name__)
 
 # Configure CORS properly to accept requests from your React app
@@ -19,15 +27,28 @@ CORS(app,
      }},
      supports_credentials=True)
 
-# Configure MongoDB - Make sure this is set before initializing PyMongo
+# Load environment variables
+load_dotenv()
+
+# Groq API Key
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    print("Warning: GROQ_API_KEY not found in environment variables")
+
+# Configure MongoDB - Make sure this is set before initializing connections
 mongo_uri = "mongodb+srv://bossutkarsh30:YOCczedaElKny6Dd@cluster0.gixba.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
-# Connect to MongoDB using MongoEngine
+# Connect to MongoDB using MongoEngine for document models
 me.connect(db="alzheimers_db", host=mongo_uri)
+
+# Connect to MongoDB using PyMongo client for conversation collection
+client = MongoClient(mongo_uri)
+db = client["alzheimers_db"]
+conversation_collection = db["conversation"]
 
 # Define Document Models
 class Patient(Document):
-    user_id = StringField(primary_key=True, default=lambda: str(uuid.uuid4()))  # Simple unique ID
+    user_id = StringField(primary_key=True, default=lambda: str(uuid.uuid4()))
     name = StringField(required=True)
     email = StringField(required=True, unique=True)
     password = StringField(required=True)
@@ -38,7 +59,7 @@ class Patient(Document):
 
     def to_json(self):
         return {
-            '_id': self.user_id,  # Use user_id as the ID
+            '_id': self.user_id,
             'name': self.name,
             'email': self.email,
             'age': self.age,
@@ -52,7 +73,6 @@ class KnownPerson(Document):
     patient_id = StringField()
     image_path = StringField()
     face_encoding = ListField()
-    # Add other fields as needed
     
     meta = {'collection': 'known_person'}
     
@@ -63,23 +83,6 @@ class KnownPerson(Document):
             'name': self.name,
             'known_person_id': self.known_person_id
         }
-
-# Add a route to test MongoDB connection
-@app.route('/api/test', methods=['GET'])
-def test_db():
-    try:
-        # Check if we can access the database
-        db_names = connect(host=mongo_uri).database_names()
-        return jsonify({
-            'status': 'success',
-            'message': 'MongoDB connection successful',
-            'databases': db_names
-        })
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'MongoDB connection failed: {str(e)}'
-        }), 500
 
 # JWT token verification middleware
 def token_required(f):
@@ -117,10 +120,137 @@ def options_known_person_ids(patient_id):
     response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
     return response
 
+# Groq API Functions
+def summarize_conversation(conversation_text):
+    """Creates a concise conversation summary using Groq's current models."""
+    try:
+        if not conversation_text or len(conversation_text.strip()) < 10:
+            return "Not enough conversation data to summarize."
+
+        print(f"Creating concise summary (length: {len(conversation_text)} characters)...")
+
+        # Check if Groq API key is available
+        if not GROQ_API_KEY:
+            return "Groq API key not configured. Cannot generate summary."
+
+        headers = {
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        }
+
+        # Updated to use a current Groq model (as of March 2025)
+        payload = {
+            "model": "llama3-70b-8192",
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are an AI assistant that creates brief, personal summaries of conversations."
+                },
+                {
+                    "role": "user",
+                    "content": f"Summarize this conversation , keep it humble\n\n{conversation_text}\n\nKeep it detailed and highlight:\n1. Main topic and key points\n2. Any specific details or numbers mentioned\n3. mention the names mentioned\n5.Numbers mentioned.\n 5. No bad words should be mentioned"
+                }
+            ],
+            "temperature": 0.3,
+            "max_tokens": 300,
+            "top_p": 0.8,
+            "stream": False
+        }
+
+        print("Sending request to Groq API...")
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            json=payload,
+            headers=headers,
+            timeout=30
+        )
+        
+        # Debug information
+        print(f"API Response Status: {response.status_code}")
+        
+        if response.status_code != 200:
+            try:
+                error_details = response.json()
+                print(f"API Error Details: {error_details}")
+            except ValueError:
+                print(f"API Error Response: {response.text}")
+            return f"Failed to generate summary. Status code: {response.status_code}"
+            
+        result = response.json()
+        if "choices" in result and result["choices"]:
+            summary_text = result["choices"][0].get("message", {}).get("content", "")
+            if summary_text:
+                return summary_text.strip()
+        
+        return "Could not generate summary from API response."
+            
+    except requests.exceptions.RequestException as e:
+        print(f"API Request Error: {str(e)}")
+        return f"Failed to get summary from API: {str(e)}"
+    except Exception as e:
+        print(f"Error in summarize_conversation: {str(e)}")
+        return f"Summary generation failed: {str(e)}"
+
+def test_groq_api():
+    """Test connection to Groq API"""
+    # Skip test if API key is not available
+    if not GROQ_API_KEY:
+        print("Warning: GROQ_API_KEY not found, skipping API test")
+        return False
+        
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    test_payload = {
+        "model": "llama3-70b-8192",
+        "messages": [{"role": "user", "content": "Test message"}]
+    }
+
+    try:
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            json=test_payload,
+            headers=headers,
+            timeout=10
+        )
+
+        print(f"Test API Status: {response.status_code}")
+        if response.status_code != 200:
+            try:
+                error_details = response.json()
+                print(f"Test API Error Details: {error_details}")
+            except ValueError:
+                print(f"Test API Error Response: {response.text}")
+            return False
+        return True
+
+    except Exception as e:
+        print(f"Test API Error: {e}")
+        return False
+
 # Basic route for testing
 @app.route('/', methods=['GET'])
 def home():
     return "API Running"
+
+# Add a route to test MongoDB connection
+@app.route('/api/test', methods=['GET'])
+def test_db():
+    try:
+        # Check if we can access the database
+        db_names = connect(host=mongo_uri).database_names()
+        return jsonify({
+            'status': 'success',
+            'message': 'MongoDB connection successful',
+            'databases': db_names
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'MongoDB connection failed: {str(e)}'
+        }), 500
 
 # Register route
 @app.route('/api/auth/register', methods=['POST'])
@@ -335,6 +465,280 @@ def get_known_persons(current_user_id, patient_id):
             'message': f'Error retrieving known persons: {str(e)}'
         }), 500
 
+# CONVERSATION ENDPOINTS FROM SECOND FILE
+
+@app.route('/api/save-conversation', methods=['POST'])
+def save_conversation():
+    """Endpoint to save a new conversation or update an existing one."""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({
+                'error': 'No data provided',
+                'success': False
+            }), 400
+        
+        # Add last_updated field if not present
+        if not data.get('last_updated'):
+            # Try to get timestamp from last message or use current time
+            if data.get('conversation') and isinstance(data.get('conversation'), list) and data['conversation']:
+                last_msg = data['conversation'][-1]
+                if last_msg.get('timestamp'):
+                    data['last_updated'] = last_msg['timestamp']
+                else:
+                    data['last_updated'] = datetime.datetime.now().isoformat()
+            else:
+                data['last_updated'] = datetime.datetime.now().isoformat()
+        
+        # Check required fields
+        if not data.get('patient_id') or not data.get('known_person_id'):
+            return jsonify({
+                'error': 'Missing required fields (patient_id, known_person_id)',
+                'success': False
+            }), 400
+        
+        # Check if a conversation already exists for these users
+        existing_conversation = conversation_collection.find_one({
+            'patient_id': data['patient_id'],
+            'known_person_id': data['known_person_id']
+        })
+        
+        if existing_conversation:
+            # Update existing conversation
+            result = conversation_collection.update_one(
+                {'_id': existing_conversation['_id']},
+                {'$set': data}
+            )
+            success = result.modified_count > 0
+            message = 'Conversation updated successfully' if success else 'No changes made to the conversation'
+            conversation_id = str(existing_conversation['_id'])
+        else:
+            # Insert new conversation
+            result = conversation_collection.insert_one(data)
+            success = result.inserted_id is not None
+            message = 'Conversation saved successfully' if success else 'Failed to save conversation'
+            conversation_id = str(result.inserted_id) if result.inserted_id else None
+        
+        return jsonify({
+            'success': success,
+            'message': message,
+            'id': conversation_id
+        })
+        
+    except Exception as e:
+        print(f"Error saving conversation: {str(e)}")
+        return jsonify({
+            'error': f'Failed to save conversation: {str(e)}',
+            'success': False
+        }), 500
+
+@app.route('/api/summarize-all-conversations', methods=['GET'])
+def summarize_all_conversations_endpoint():
+    patient_id = request.args.get('patient_id')
+    known_person_id = request.args.get('known_person_id')
+
+    if not all([patient_id, known_person_id]):
+        return jsonify({
+            'error': 'Missing required parameters (patient_id, known_person_id)',
+            'success': False
+        }), 400
+
+    try:
+        conversations = conversation_collection.find({
+            "patient_id": patient_id,
+            "known_person_id": known_person_id
+        }).sort("last_updated", 1)
+
+        full_conversation_text = []
+        original_messages = []
+        conversation_dates = set()
+
+        # Process each conversation document
+        for conversation_doc in conversations:
+            # Get the conversation array directly
+            if conversation_doc.get('conversation') and isinstance(conversation_doc.get('conversation'), list):
+                messages = conversation_doc.get('conversation')
+                
+                for message in messages:
+                    # Skip empty messages
+                    if not message.get('text'):
+                        continue
+                        
+                    # Parse timestamp
+                    if message.get('timestamp'):
+                        try:
+                            msg_timestamp = parse(message.get('timestamp', ''))
+                            msg_date = msg_timestamp.date()
+                        except Exception as e:
+                            print(f"Error parsing timestamp: {e}")
+                            # Use current date/time if parsing fails
+                            msg_timestamp = datetime.datetime.now()
+                            msg_date = msg_timestamp.date()
+                    else:
+                        # Use current date/time if no timestamp
+                        msg_timestamp = datetime.datetime.now()
+                        msg_date = msg_timestamp.date()
+                    
+                    conversation_dates.add(msg_date.isoformat())
+                    
+                    # Default speaker to Unknown if not provided
+                    speaker = message.get('speaker', 'Unknown')
+                    text = message.get('text', '')
+                    
+                    if text:
+                        formatted_message = f"[{msg_timestamp.isoformat()}] {speaker}: {text}"
+                        full_conversation_text.append(formatted_message)
+                        original_messages.append({
+                            'speaker': speaker,
+                            'text': text,
+                            'timestamp': msg_timestamp.isoformat(),
+                            'date': msg_date.isoformat()
+                        })
+
+        if not full_conversation_text:
+            return jsonify({
+                'success': False,
+                'summary': f'No conversations found between these users',
+                'conversation_count': 0
+            })
+
+        conversation_text = "\n".join(full_conversation_text)
+        summary = summarize_conversation(conversation_text)
+        
+        # Group messages by date
+        messages_by_date = {}
+        for msg in original_messages:
+            date = msg['date']
+            if date not in messages_by_date:
+                messages_by_date[date] = []
+            messages_by_date[date].append(msg)
+        
+        return jsonify({
+            'success': True,
+            'summary': summary,
+            'conversation_length': len(conversation_text),
+            'total_messages': len(full_conversation_text),
+            'original_messages': original_messages,
+            'messages_by_date': messages_by_date,
+            'conversation_dates': sorted(list(conversation_dates)),
+            'conversation_count': len(original_messages)
+        })
+
+    except Exception as e:
+        print(f"Error processing request: {str(e)}")
+        return jsonify({
+            'error': f'Failed to process request: {str(e)}',
+            'success': False
+        }), 500
+
+@app.route('/api/summarize-conversation', methods=['GET'])
+def summarize_conversation_endpoint():
+    patient_id = request.args.get('patient_id')
+    known_person_id = request.args.get('known_person_id')
+    date_str = request.args.get('date')
+
+    print(f"Fetching conversations for date: {date_str}")
+
+    if not all([patient_id, known_person_id, date_str]):
+        return jsonify({
+            'error': 'Missing required parameters (patient_id, known_person_id, date)',
+            'success': False
+        }), 400
+
+    try:
+        target_date = parse(date_str).date()
+        today = datetime.datetime.now().date()
+        
+        if target_date > today:
+            return jsonify({
+                'error': 'Cannot fetch conversations from future dates',
+                'success': False
+            }), 400
+
+        conversations = conversation_collection.find({
+            "patient_id": patient_id,
+            "known_person_id": known_person_id
+        }).sort("last_updated", 1)
+
+        full_conversation_text = []
+        latest_conversation_id = None
+        original_messages = []
+
+        for conversation_doc in conversations:
+            # Direct access to conversation array
+            if conversation_doc.get('conversation') and isinstance(conversation_doc.get('conversation'), list):
+                messages = conversation_doc.get('conversation')
+                
+                for message in messages:
+                    # Skip empty messages
+                    if not message.get('text'):
+                        continue
+                        
+                    # Parse timestamp
+                    if message.get('timestamp'):
+                        try:
+                            msg_timestamp = parse(message.get('timestamp', ''))
+                            msg_date = msg_timestamp.date()
+                        except Exception as e:
+                            print(f"Error parsing timestamp: {e}")
+                            # Use current date/time if parsing fails
+                            msg_timestamp = datetime.datetime.now()
+                            msg_date = msg_timestamp.date()
+                    else:
+                        # Use current date/time if no timestamp
+                        msg_timestamp = datetime.datetime.now()
+                        msg_date = msg_timestamp.date()
+                    
+                    if msg_date == target_date:
+                        latest_conversation_id = conversation_doc['_id']
+                        speaker = message.get('speaker', 'Unknown')
+                        text = message.get('text', '')
+                        
+                        if text:
+                            formatted_message = f"[{msg_timestamp.isoformat()}] {speaker}: {text}"
+                            full_conversation_text.append(formatted_message)
+                            original_messages.append({
+                                'speaker': speaker,
+                                'text': text,
+                                'timestamp': msg_timestamp.isoformat()
+                            })
+
+        if not full_conversation_text:
+            return jsonify({
+                'success': False,
+                'summary': f'No conversations found for {target_date}',
+                'conversation_count': 0,
+                'date': target_date.isoformat()
+            })
+
+        conversation_text = "\n".join(full_conversation_text)
+        summary = summarize_conversation(conversation_text)
+        
+        return jsonify({
+            'success': True,
+            'summary': summary,
+            'conversation_length': len(conversation_text),
+            'conversation_id': str(latest_conversation_id) if latest_conversation_id else None,
+            'total_messages': len(full_conversation_text),
+            'original_messages': original_messages,
+            'date': target_date.isoformat(),
+            'conversation_count': len(original_messages)
+        })
+
+    except ValueError as ve:
+        return jsonify({
+            'error': f'Invalid date format. Please use YYYY-MM-DD: {str(ve)}',
+            'success': False
+        }), 400
+    except Exception as e:
+        print(f"Error processing request: {str(e)}")
+        return jsonify({
+            'error': f'Failed to process request: {str(e)}',
+            'success': False
+        }), 500
+
+# Test Groq API connection on startup
+test_groq_api()
 
 if __name__ == '__main__':
     port = 5000

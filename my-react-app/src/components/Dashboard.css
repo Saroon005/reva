@@ -21,6 +21,10 @@
     justify-content: center;
     height: 100vh;
   }
+
+  .loading-container p{
+    text-align: center;
+  }
   
   .loading-spinner {
     width: 40px;
@@ -51,8 +55,8 @@
   /* Header styles */
   .dashboard-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: center; /* Corrected line */
     padding: 16px 24px;
     background-color: white;
     border-bottom: 1px solid #eaeaea;
@@ -64,8 +68,8 @@
   }
   
   .user-avatar {
-    width: 48px;
-    height: 48px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     background-color: #3498db;
     color: white;
@@ -93,10 +97,11 @@
     color: #3498db;
     border: 1px solid #3498db;
     border-radius: 4px;
-    padding: 8px 16px;
+    padding: 1px;
     font-size: 14px;
     cursor: pointer;
     transition: all 0.2s ease;
+    margin-top: 8px;
   }
   
   .logout-button:hover {
@@ -151,35 +156,40 @@
   
   /* Footer with record button */
   .dashboard-footer {
-    padding: 24px;
-    background-color: white;
-    border-top: 1px solid #eaeaea;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px; /* Slightly reduced padding for mobile */
+    background-color: #f0f0f0;
+    border-top: 1px solid #ddd;
+    cursor: pointer;
   }
   
   .record-button {
-    width: 100%;
-    padding: 16px;
-    background-color: #ff3b30;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: center;
-    transition: background-color 0.2s;
+    padding: 15px 28px; /* Reduced padding for mobile */
+    background-color: #ff6f00;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px; /* Slightly smaller font for mobile */
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 90%; /* Make button take up more width on mobile */
+    max-width: 300px; /* Prevent it from becoming too wide */
+    box-sizing: border-box; /* Include padding in width calculation */
   }
   
   .record-button:hover {
-    background-color: #e5352b;
+    background-color: #ffaa34;
   }
   
   .record-icon {
-    font-size: 16px;
-    margin-right: 8px;
-    animation: pulse 2s infinite;
+    margin-right: 8px; /* Reduced margin for mobile */
+    font-size: 1em; /* Reduced icon size for mobile */
+    color: black;
+
   }
   
   @keyframes pulse {
@@ -190,17 +200,13 @@
   
   /* Responsive adjustments */
   @media (max-width: 768px) {
-    .feature-grid {
-      grid-template-columns: 1fr;
-    }
     
     .dashboard-header {
-      flex-direction: column;
       align-items: flex-start;
     }
-    
-    .logout-button {
-      margin-top: 16px;
-      align-self: flex-end;
+  
+    .user-avatar {
+      width: 20px;
+      height: 20px;
     }
   }

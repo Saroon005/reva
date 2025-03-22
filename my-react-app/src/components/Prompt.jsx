@@ -14,34 +14,32 @@ function Prompt() {
   const [fadeIn, setFadeIn] = useState(false);
 
   const navigate = useNavigate();
-  // Get patient ID from localStorage
   const patientId = localStorage.getItem('userId') || '';
 
-  // Fetch the list of known persons from MongoDB
   useEffect(() => {
     const fetchKnownPersons = async () => {
       try {
         setIsLoading(true);
         const token = localStorage.getItem('token');
-        
+
         if (!patientId || !token) {
           setError('Authentication information missing. Please log in again.');
           setIsLoading(false);
           return;
         }
-        
+
         const response = await axios.get(`http://localhost:5000/api/known-persons/${patientId}`, {
           headers: {
             'x-auth-token': token
           }
         });
-        
+
         setKnownPersons(response.data.known_persons);
-        
+
         if (response.data.known_persons.length > 0 && !selectedPersonId) {
           setSelectedPersonId(response.data.known_persons[0].id);
         }
-        
+
         setIsLoading(false);
       } catch (err) {
         console.error('Error details:', err);
@@ -59,7 +57,6 @@ function Prompt() {
     }
   }, [patientId, selectedPersonId]);
 
-  // Apply fade-in effect when summary data changes
   useEffect(() => {
     if (summaryData) {
       setFadeIn(false);
@@ -70,7 +67,6 @@ function Prompt() {
     }
   }, [summaryData]);
 
-  // Fetch summary for a specific date
   const fetchDateSummary = async () => {
     if (!selectedPersonId) {
       setError('Please select a known person first');
@@ -80,9 +76,9 @@ function Prompt() {
     try {
       setIsLoading(true);
       setError(null);
-      setSummaryData(null); // Clear previous data
+      setSummaryData(null);
       
-      const response = await axios.get('http://localhost:5002/api/summarize-conversation', {
+      const response = await axios.get('http://localhost:5000/api/summarize-conversation', {
         params: {
           patient_id: patientId,
           known_person_id: selectedPersonId,
@@ -99,7 +95,6 @@ function Prompt() {
     }
   };
 
-  // Fetch summary for all conversations
   const fetchAllSummaries = async () => {
     if (!selectedPersonId) {
       setError('Please select a known person first');
@@ -109,9 +104,9 @@ function Prompt() {
     try {
       setIsLoading(true);
       setError(null);
-      setSummaryData(null); // Clear previous data
+      setSummaryData(null);
       
-      const response = await axios.get('http://localhost:5002/api/summarize-all-conversations', {
+      const response = await axios.get('http://localhost:5000/api/summarize-all-conversations', {
         params: {
           patient_id: patientId,
           known_person_id: selectedPersonId
@@ -127,19 +122,15 @@ function Prompt() {
     }
   };
 
-  // Handle date change
   const handleDateChange = (e) => {
     setSelectedDate(e.target.value);
   };
 
-  // Handle person selection
   const handlePersonChange = (e) => {
     setSelectedPersonId(e.target.value);
-    // Clear previous summary data when changing person
     setSummaryData(null);
   };
 
-  // Format date for display
   const formatDate = (dateString) => {
     try {
       return new Date(dateString).toLocaleDateString(undefined, {
@@ -155,16 +146,15 @@ function Prompt() {
   };
 
   const handleDashboardClick = () => {
-    navigate('/dashboard'); // Navigate to dashboard
+    navigate('/dashboard');
   };
 
   const handleLogoutClick = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
-    navigate('/'); // Navigate to login
+    navigate('/');
   };
 
-  // Get selected person name
   const getSelectedPersonName = () => {
     const person = knownPersons.find(p => p.known_person_id === selectedPersonId);
     return person ? person.name : 'Unknown Person';
@@ -184,7 +174,6 @@ function Prompt() {
         </div>
       </nav>
       
-      {/* Error display */}
       {error && (
         <div className="error-message">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -196,7 +185,6 @@ function Prompt() {
         </div>
       )}
 
-      {/* Selection Controls */}
       <div className="control-panel">
         <div className="form-group">
           <label htmlFor="personSelect" className="form-label">
@@ -252,8 +240,7 @@ function Prompt() {
                   <line x1="3" y1="10" x2="21" y2="10"></line>
                 </svg>
                 Get Summary for Selected Date
-              </>
-            )}
+              </>)}
           </button>
           
           <button
@@ -278,7 +265,6 @@ function Prompt() {
         </div>
       </div>
 
-      {/* Results Display */}
       {summaryData && (
         <div className={`results-card ${fadeIn ? 'fade-in' : ''}`} style={{ 
           opacity: fadeIn ? 1 : 0,
@@ -314,7 +300,6 @@ function Prompt() {
               )}
             </div>
             
-            {/* Messages section */}
             {summaryData.original_messages && summaryData.original_messages.length > 0 && (
               <div className="card-section">
                 <h3 className="section-title">Original Messages</h3>
@@ -334,7 +319,6 @@ function Prompt() {
               </div>
             )}
             
-            {/* Messages by date section (for all conversations) */}
             {summaryData.messages_by_date && Object.keys(summaryData.messages_by_date).length > 0 && (
               <div className="card-section">
                 <h3 className="section-title">Conversation History</h3>
@@ -365,7 +349,6 @@ function Prompt() {
         </div>
       )}
       
-      {/* Loading state with no data yet */}
       {isLoading && !summaryData && (
         <div className="loading-state">
           <div className="loading-icon"></div>
@@ -373,7 +356,6 @@ function Prompt() {
         </div>
       )}
 
-      {/* Empty state */}
       {!isLoading && !summaryData && selectedPersonId && (
         <div className="empty-state">
           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 1rem auto', opacity: 0.5 }}>

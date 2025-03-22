@@ -181,7 +181,8 @@ body {
   color: var(--danger);
   border: 1px solid var(--danger);
   border-radius: 8px;
-  padding: 10px 16px;
+  padding: 5px;
+  margin-right: 10px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -193,6 +194,21 @@ body {
   background-color: var(--danger);
   color: white;
 }
+
+.green{
+  color: green;
+  font-weight: 800;
+  font-size: larger;
+  margin: 2px;
+}
+.red{
+  color: red;
+  font-weight: 800;
+  font-size: larger;
+  margin: 2px;
+
+}
+
 
 .prompt-card {
   background-color: var(--bg-white);
@@ -319,9 +335,6 @@ body {
     gap: 16px;
   }
   
-  .logout-button {
-    align-self: flex-end;
-  }
 }
 
 @media (max-width: 480px) {
@@ -338,8 +351,8 @@ body {
   }
   
   .user-avatar {
-    width: 80px;
-    height: 80px;
+    width: 45px;
+    height: 40px;
     font-size: 2rem;
   }
 }
