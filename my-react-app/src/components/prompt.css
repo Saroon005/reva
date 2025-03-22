@@ -388,10 +388,11 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  width: 100%;
 }
 
 .message-item {
-  max-width: 80%;
+  max-width: 95%;
   display: flex;
   flex-direction: column;
 }
@@ -574,7 +575,7 @@
   }
   
   .message-item {
-    max-width: 90%;
+    max-width: 98%;
   }
   
   .button-container {
