@@ -900,6 +900,10 @@
   .contact-card.selected .contact-avatar {
     animation: pulse 2s infinite;
   }
+
+  .loging-button{
+    color: white;
+  }
   
   /* Shimmer effect for loading states */
   .loading-skeleton {

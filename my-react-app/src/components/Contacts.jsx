@@ -182,7 +182,7 @@ function Contacts() {
         <div className="header-buttons">
           <Link to="/dashboard" className="nav-button">Dashboard</Link>
           <Link to="/prompt" className="nav-button">Insights</Link>
-          <button onClick={handleLogout} className="logout-button">Logout</button>
+          <button onClick={handleLogout} className="log-button">Logout</button>
         </div>
       </header>
 
