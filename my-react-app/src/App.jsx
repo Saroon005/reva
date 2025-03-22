@@ -5,6 +5,7 @@ import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import Prompt from './components/Prompt';
 import Contacts from './components/contacts';
+import UserProfile from './components/UserProfile'; 
 
 import './App.css';
 
@@ -29,6 +30,7 @@ function App() {
           <Route path="/Dashboard" element={<Dashboard />} />
           <Route path="/prompt" element={<Prompt />} />
           <Route path="/contacts" element={<Contacts />} />
+          <Route path="/userprofile" element={<UserProfile />} />
         </Routes>
       </div>
     </Router>

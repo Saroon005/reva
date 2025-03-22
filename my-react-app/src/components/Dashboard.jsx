@@ -87,7 +87,7 @@ function Dashboard() {
       {/* Header with user profile and logout */}
       <header className="dashboard-header">
         <div className="profile-section">
-          <div className="user-avatar">
+          <div className="user-avatar" onClick={() => navigate('/userprofile')}>
             {getInitials()}
           </div>
           <div className="user-name">
@@ -118,10 +118,10 @@ function Dashboard() {
           </div>
 
           {/* Box 3: Dummy Feature 1 */}
-          <div className="feature-box">
+          <div className="feature-box" onClick={() => navigate('/userprofile')}>
             <div className="feature-icon">📊</div>
-            <h3>Analytics</h3>
-            <p>View your usage statistics</p>
+            <h3>User Profile</h3>
+            <p>View your credentials</p>
           </div>
 
           {/* Box 4: Dummy Feature 2 */}
