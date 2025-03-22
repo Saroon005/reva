@@ -542,10 +542,13 @@
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .error-message {
   background-color: var(--danger-light);
+  border-left: 4px solid var(--danger);
   border-left: 4px solid var(--danger);
   color: var(--danger);
   padding: clamp(0.75rem, 2.5vw, 1rem);
@@ -569,6 +572,9 @@
   }
 }
 
+.fade-in {
+  animation: fadeIn 0.5s ease forwards;
+}
 .fade-in {
   animation: fadeIn 0.5s ease forwards;
 }
